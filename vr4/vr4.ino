@@ -1,18 +1,21 @@
-// all states and transition between states work except for button
-// to stop and reset entire interaction
+// everything works except servo4 and servo5 hitting user
 
 #include <Servo.h>
 #include <TM1637Display.h>
 
 #define CLK_PIN 3
 #define DIO_PIN 4
-const int buzzerPin = 5; 
+const int buzzerPin = 5;
 const int buttonPin = 2;
 
 // servos
 Servo servo1;
 Servo servo2;
 Servo servo3;
+
+// hits hand
+Servo servo4;
+Servo servo5;
 
 // ultrasonic distance pins
 int triggerPin = 9;
@@ -47,6 +50,8 @@ void setup() {
   servo1.attach(6);
   servo2.attach(8);
   servo3.attach(10);
+  servo4.attach(0);
+  servo5.attach(1);
 
   // timer
   display.setBrightness(7);         // Set brightness (0-7)
@@ -81,36 +86,41 @@ void loop() {
   distance = duration / 29 / 2;
   Serial.println(distance);
 
-  // check to see if button pressed 5 seconds
-  if (digitalRead(buttonPin) == LOW) {
-    buttonState = digitalRead(buttonPin);
+  // press for 2 seconds, 5 was too long
+  // press only 1 second because too long otherwise
+  // there is a really bad delay
+  buttonState = digitalRead(buttonPin);
 
-    if (prevButtonState == LOW && buttonState == HIGH) {
+  if (buttonState == LOW) {
+    Serial.println("not pressed");
+
+    if (prevButtonState == HIGH) {
       buttonPressStartTime = millis();
     }
 
-    if (prevButtonState == HIGH && buttonState == LOW) {
-      // check button pressed least 5 seconds
-      if (millis() - buttonPressStartTime >= 5000) {
-        resetToDefault();  // reset to default end everything!
-      }
+    if (millis() - buttonPressStartTime >= 1000) {
+      Serial.println("pressed");
+      resetToDefault();
     }
 
-    prevButtonState = buttonState;  // update previous button state
+  } else {
+    buttonPressStartTime = 0;
   }
+
+  prevButtonState = buttonState;
+
 
   // regardless of state after timer starts it should not stop until grass touched
   if (isCounting == true) {
     count++;
     display.showNumberDec(count, false);
-    delay(50);
   }
 
-// replaces isBuzzerState function because keeping it in the loop function ensures it keeps playing sound
-// no conflicts with other functions
+  // replaces isBuzzerState function because keeping it in the loop function ensures it keeps playing sound
+  // no conflicts with other functions
   if (isBuzzerActive == true) {
     Serial.println("i make sound");
-    tone(buzzerPin, 1000);  // high freq tone
+    tone(buzzerPin, 3000);  // high freq tone
   }
 
   delay(100);
@@ -149,6 +159,35 @@ void ServosSpinning() {
     isBuzzerActive = true;
   }
 }
+
+void playSong() {
+  // https://www.mintmusic.co.uk/2018/02/symphony-clean-bandit-ft-zara-larsson.html
+  // tone(buzzerPin, 500, 1000);  // keep just in case meme song doesn't work
+  // "I just wanna be part of your symphony"
+  tone(buzzerPin, 311, 120);  // D#
+  delay(220);
+  tone(buzzerPin, 349, 120);  // F
+  delay(220);
+  tone(buzzerPin, 392, 120);  // G
+  delay(220);
+  tone(buzzerPin, 466, 120);  // A#
+  delay(220);
+  tone(buzzerPin, 392, 120);  // G
+  delay(220);
+  tone(buzzerPin, 466, 120);  // A#
+  delay(220);
+  tone(buzzerPin, 523, 120);  // C
+  delay(220);
+  tone(buzzerPin, 622, 120);  // D#
+  delay(220);
+  tone(buzzerPin, 698, 200);  // F
+  delay(220);
+  tone(buzzerPin, 698, 200);  // F
+  delay(220);
+  tone(buzzerPin, 622, 1000);  // D#
+  delay(1000);
+}
+
 void resetToDefault() {
   isDefault = true;
   isCountingState = false;
@@ -160,6 +199,7 @@ void resetToDefault() {
   servo1.write(90);
   servo2.write(90);
   servo3.write(90);
+  servo4.write(0);
+  playSong();
   noTone(buzzerPin);
-  tone(buzzerPin, 500, 1000);  // soft tone (return to nature reminder)
 }
