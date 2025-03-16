@@ -1,3 +1,7 @@
+// servo spin and stops depending on user distance 50 cm range in front of servo
+// no timer added
+// no buzzer added
+
 #include <Servo.h>
 #include <TM1637Display.h>
 
