@@ -3,8 +3,8 @@
 
 #define CLK_PIN 3
 #define DIO_PIN 4
-#define BUZZER_PIN 5
-#define BUTTON_PIN 2
+const int buzzerPin = 5; 
+const int buttonPin = 2;
 
 // servos
 Servo servo1;
@@ -23,9 +23,9 @@ TM1637Display display(CLK_PIN, DIO_PIN);
 
 // buzzer + button states
 bool buzzerActive = false;
-int buttonState;          
-int prevButtonState;      
-long buttonPressStartTime = 0; 
+int buttonState;
+int prevButtonState;
+long buttonPressStartTime = 0;
 
 // four different states
 bool isDefault = true;
@@ -36,54 +36,64 @@ bool isBuzzerActive = false;
 void setup() {
   Serial.begin(9600);
 
-  // distance sensor 
+  // distance sensor
   pinMode(triggerPin, OUTPUT);
   pinMode(echoPin, INPUT);
 
-  // servo 
+  // servo
   servo1.attach(6);
   servo2.attach(8);
   servo3.attach(10);
 
-  // timer 
-  display.setBrightness(7); // Set brightness (0-7)
-  display.showNumberDec(0, false); // Display initial count as 0
+  // timer
+  display.setBrightness(7);         // Set brightness (0-7)
+  display.showNumberDec(0, false);  // Display initial count as 0
 
-  // buzzer 
-  pinMode(BUZZER_PIN, OUTPUT);
+  // buzzer
+  pinMode(buzzerPin, OUTPUT);
 
-  // button 
-  pinMode(BUTTON_PIN, INPUT);
-  prevButtonState = digitalRead(BUTTON_PIN);
+  // button
+  pinMode(buttonPin, INPUT);
+  prevButtonState = digitalRead(buttonPin);
 }
 
 void loop() {
+  // functions for what to do in each state
+  if (isDefault == true) {
+    Default();
+  } else if (isCountingState == true) {
+    Counting();
+  } else if (isServosSpinning == true) {
+    ServosSpinning();
+    // buzzer state was removed from here because if isBuzzerActive was deleted
+  }
+
   // ultrasonic distance checking
   digitalWrite(triggerPin, LOW);
   delayMicroseconds(2);
   digitalWrite(triggerPin, HIGH);
   delayMicroseconds(10);
-  digitalWrite(triggerPin, LOW); 
+  digitalWrite(triggerPin, LOW);
   long duration = pulseIn(echoPin, HIGH, 17400);
   distance = duration / 29 / 2;
   Serial.println(distance);
 
   // check to see if button pressed 5 seconds
-  if (digitalRead(BUTTON_PIN) == LOW) {
-    buttonState = digitalRead(BUTTON_PIN); 
+  if (digitalRead(buttonPin) == LOW) {
+    buttonState = digitalRead(buttonPin);
 
-  if (prevButtonState == LOW && buttonState == HIGH) {
-    buttonPressStartTime = millis(); 
-  }
-
-  if (prevButtonState == HIGH && buttonState == LOW) {
-    // check button pressed least 5 seconds
-    if (millis() - buttonPressStartTime >= 5000) {
-      resetToDefault(); // reset to default end everything!
+    if (prevButtonState == LOW && buttonState == HIGH) {
+      buttonPressStartTime = millis();
     }
-  }
 
-  prevButtonState = buttonState; // update previous button state
+    if (prevButtonState == HIGH && buttonState == LOW) {
+      // check button pressed least 5 seconds
+      if (millis() - buttonPressStartTime >= 5000) {
+        resetToDefault();  // reset to default end everything!
+      }
+    }
+
+    prevButtonState = buttonState;  // update previous button state
   }
 
   // regardless of state after timer starts it should not stop until grass touched
@@ -93,18 +103,14 @@ void loop() {
     delay(50);
   }
 
-  // functions for what to do in each state
-  if (isDefault == true) {
-    Default();
-  } else if (isCountingState == true) {
-    Counting();
-  } else if (isServosSpinning == true) {
-    ServosSpinning();
-  } else if (isBuzzerActive == true) {
-    BuzzerActive();
+// replaces isButterState function because keeping it in the loop function ensures it keeps playing sound
+// no conflicts with other functions
+  if (isBuzzerActive == true) {
+    Serial.println("i make sound");
+    tone(buzzerPin, 1000);  // high freq tone
   }
 
-  delay(100); 
+  delay(100);
 }
 
 void Default() {
@@ -118,12 +124,13 @@ void Default() {
 void Counting() {
   if (isCounting == true) {
     count++;
+    Serial.println("counting works");
     display.showNumberDec(count, false);
     delay(50);
 
     if (count >= 5) {
-      isCountingState = false; 
-      isServosSpinning = true; 
+      isCountingState = false;
+      isServosSpinning = true;
     }
   }
 }
@@ -135,14 +142,10 @@ void ServosSpinning() {
   servo3.write(45);
 
   if (count >= 20) {
+    Serial.println("servo works");
     isBuzzerActive = true;
   }
 }
-
-void BuzzerActive() {
-  tone(BUZZER_PIN, 1000); // high freq tone
-}
-
 void resetToDefault() {
   isDefault = true;
   isCountingState = false;
@@ -154,6 +157,6 @@ void resetToDefault() {
   servo1.write(90);
   servo2.write(90);
   servo3.write(90);
-  noTone(BUZZER_PIN);
-  tone(BUZZER_PIN, 500, 1000); // soft tone (return to nature reminder)
+  noTone(buzzerPin);
+  tone(buzzerPin, 500, 1000);  // soft tone (return to nature reminder)
 }
