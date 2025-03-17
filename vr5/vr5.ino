@@ -1,4 +1,9 @@
-// fixing end sog being played numerous times 
+// main issues end song is PLAYING randomly 
+// thoroughout the program because button
+// is not being detected as not pressed somehow
+// added several debugging print statements
+
+
 #include <Servo.h>
 #include <TM1637Display.h>
 
@@ -40,6 +45,7 @@ bool isBuzzerActive = false;
 
 void setup() {
   Serial.begin(9600);
+  Serial.println("intialize program");
 
   // distance sensor
   pinMode(triggerPin, OUTPUT);
@@ -94,25 +100,20 @@ void loop() {
   buttonState = digitalRead(buttonPin);
 
   if (buttonState == LOW) {
-
     if (prevButtonState == HIGH) {
       buttonPressStartTime = millis();
     }
 
     if (millis() - buttonPressStartTime >= 1000) {
       resetToDefault();
-      // issue w/end song playing repeatedly after the button is pressed 
-      // due to the way the resetToDefault() function is being called 
-      // default reset is repeatedly as long as the button is held down for more than 1 second
-      // this is causing the song to play multiple times.
     }
 
   } else {
     buttonPressStartTime = 0;
   }
 
+  Serial.print("initial button state: ");
   prevButtonState = buttonState;
-
 
   // regardless of state after timer starts it should not stop until grass touched
   if (isCounting == true) {
@@ -165,6 +166,7 @@ void ServosSpinning() {
 }
 
 void resetToDefault() {
+  Serial.println("reset is being called");
   isDefault = true;
   isCountingState = false;
   isServosSpinning = false;
@@ -176,35 +178,45 @@ void resetToDefault() {
   servo2.write(90);
   servo3.write(90);
   servo4.write(0);
-    // https://www.mintmusic.co.uk/2018/02/symphony-clean-bandit-ft-zara-larsson.html
-  // tone(buzzerPin, 500, 1000);  // keep just in case meme song doesn't work
-  // "I just wanna be part of your symphony"
-  // deleted playSong fuction because it was being
-  // activated randomly despite set bool so 
-  // here's to the more primative way of playing 
-  // the song at the end
-  Serial.println ("song mode");
-  tone(buzzerPin, 311, 120);  // D#
-  delay(220);
-  tone(buzzerPin, 349, 120);  // F
-  delay(220);
-  tone(buzzerPin, 392, 120);  // G
-  delay(220);
-  tone(buzzerPin, 466, 120);  // A#
-  delay(220);
-  tone(buzzerPin, 392, 120);  // G
-  delay(220);
-  tone(buzzerPin, 466, 120);  // A#
-  delay(220);
-  tone(buzzerPin, 523, 120);  // C
-  delay(220);
-  tone(buzzerPin, 622, 120);  // D#
-  delay(220);
-  tone(buzzerPin, 698, 200);  // F
-  delay(220);
-  tone(buzzerPin, 698, 200);  // F
-  delay(220);
-  tone(buzzerPin, 622, 1000);  // D#
-  delay(1000);
   noTone(buzzerPin);
 }
+
+
+
+
+
+
+
+
+
+
+  // // https://www.mintmusic.co.uk/2018/02/symphony-clean-bandit-ft-zara-larsson.html
+  // // tone(buzzerPin, 500, 1000);  // keep just in case meme song doesn't work
+  // // "I just wanna be part of your symphony"
+  // // deleted playSong fuction because it was being
+  // // activated randomly despite set bool so 
+  // // here's to the more primative way of playing 
+  // // the song at the end
+  // Serial.println ("song mode");
+  // tone(buzzerPin, 311, 120);  // D#
+  // delay(220);
+  // tone(buzzerPin, 349, 120);  // F
+  // delay(220);
+  // tone(buzzerPin, 392, 120);  // G
+  // delay(220);
+  // tone(buzzerPin, 466, 120);  // A#
+  // delay(220);
+  // tone(buzzerPin, 392, 120);  // G
+  // delay(220);
+  // tone(buzzerPin, 466, 120);  // A#
+  // delay(220);
+  // tone(buzzerPin, 523, 120);  // C
+  // delay(220);
+  // tone(buzzerPin, 622, 120);  // D#
+  // delay(220);
+  // tone(buzzerPin, 698, 200);  // F
+  // delay(220);
+  // tone(buzzerPin, 698, 200);  // F
+  // delay(220);
+  // tone(buzzerPin, 622, 1000);  // D#
+  // delay(1000);

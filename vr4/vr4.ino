@@ -5,7 +5,7 @@
 
 #define CLK_PIN 3
 #define DIO_PIN 4
-const int buzzerPin = 5;
+const int buzzerPin = 13;
 const int buttonPin = 2;
 
 // servos
