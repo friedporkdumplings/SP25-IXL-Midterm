@@ -1,13 +1,9 @@
-// main issues end song is PLAYING randomly
-// thoroughout the program because button
-// is not being detected as not pressed somehow
-// added several debugging print statements
+// several debugging print statements
+// servos all work hitting and spinning
+// end song and default state triggered
+// only once at the end 
 
 
-// FOUND error is default state is continonously triggered 
-// if button pressed longer than 1 second
-
-// fixing end sog being played numerous times 
 #include <Servo.h>
 #include <TM1637Display.h>
 
@@ -41,6 +37,8 @@ int buttonState;
 int prevButtonState;
 long buttonPressStartTime = 0;
 
+bool resetTriggered = false;
+
 // four different states
 bool isDefault = true;
 bool isCountingState = false;
@@ -49,6 +47,7 @@ bool isBuzzerActive = false;
 
 void setup() {
   Serial.begin(9600);
+  Serial.println("intialize program");
 
   // distance sensor
   pinMode(triggerPin, OUTPUT);
@@ -58,8 +57,8 @@ void setup() {
   servo1.attach(6);
   servo2.attach(8);
   servo3.attach(10);
-  servo4.attach(0);
-  servo5.attach(1);
+  servo4.attach(11);
+  servo5.attach(12);
 
   // timer
   display.setBrightness(7);         // Set brightness (0-7)
@@ -71,6 +70,9 @@ void setup() {
   // button
   pinMode(buttonPin, INPUT);
   prevButtonState = digitalRead(buttonPin);
+
+  servo4.write(180);
+  servo5.write(0);
 }
 
 void loop() {
@@ -79,11 +81,11 @@ void loop() {
     Serial.println("default mode");
     Default();
   } else if (isCountingState == true) {
-    Serial.println ("counting mode");
+    Serial.println("counting mode");
     Counting();
   } else if (isServosSpinning == true) {
     ServosSpinning();
-    Serial.println ("spinning mode");
+    Serial.println("spinning mode");
     // buzzer state was removed from here because if isBuzzerActive was deleted
   }
 
@@ -102,26 +104,18 @@ void loop() {
   // there is a really bad delay
   buttonState = digitalRead(buttonPin);
 
-  if (buttonState == LOW) {
-
-    if (prevButtonState == HIGH) {
-      buttonPressStartTime = millis();
-    }
-
-    if (millis() - buttonPressStartTime >= 1000) {
-      resetToDefault();
-      // issue w/end song playing repeatedly after the button is pressed 
-      // due to the way the resetToDefault() function is being called 
-      // default reset is repeatedly as long as the button is held down for more than 1 second
-      // this is causing the song to play multiple times.
-    }
-
-  } else {
-    buttonPressStartTime = 0;
+  if (buttonState == LOW && prevButtonState == HIGH) {
+    buttonPressStartTime = millis();
+    resetTriggered = false;  // reset trigger after button release
   }
 
-  prevButtonState = buttonState;
+  if (buttonState == LOW && millis() - buttonPressStartTime >= 1000 && !resetTriggered) {
+    resetToDefault();
+    resetTriggered = true;  // prevent multiple resets regardless of how long button is held down
+  }
 
+  Serial.print("initial button state: ");
+  prevButtonState = buttonState;
 
   // regardless of state after timer starts it should not stop until grass touched
   if (isCounting == true) {
@@ -140,7 +134,7 @@ void loop() {
 }
 
 void Default() {
-  if (distance > 1 && distance < 20) {
+  if (distance > 10 && distance < 50) {
     isDefault = false;
     isCounting = true;
     isCountingState = true;
@@ -154,7 +148,7 @@ void Counting() {
     display.showNumberDec(count, false);
     delay(10);
 
-    if (count >= 5) {
+    if (count >= 10) {
       isCountingState = false;
       isServosSpinning = true;
     }
@@ -167,6 +161,28 @@ void ServosSpinning() {
   servo2.write(135);
   servo3.write(45);
 
+  // for the hand hitting servos
+  bool increasing = true;  // direction of movement
+  int angle = 0;           // servo angle position
+
+  if (count >= 40) {
+  if (increasing) {
+    for (angle = 0; angle <= 180; angle += 10) {  // 0 to 180
+      servo4.write(angle);
+      servo5.write(180 - angle);
+      delay(20);
+    }
+  } else {
+    for (angle = 180; angle >= 0; angle -= 10) {  // 180 to 0
+      servo4.write(angle);
+      servo5.write(180 - angle);
+      delay(20);
+    }
+  }
+
+  increasing = !increasing;  // swtich between the directions
+  }
+
   if (count >= 20) {
     Serial.println("servo works");
     isBuzzerActive = true;
@@ -174,6 +190,12 @@ void ServosSpinning() {
 }
 
 void resetToDefault() {
+  Serial.println("reset is being called");
+  Serial.println("reset is being called");
+  Serial.println("reset is being called");
+  Serial.println("reset is being called");
+  Serial.println("reset is being called");
+
   isDefault = true;
   isCountingState = false;
   isServosSpinning = false;
@@ -184,15 +206,16 @@ void resetToDefault() {
   servo1.write(90);
   servo2.write(90);
   servo3.write(90);
-  servo4.write(0);
-    // https://www.mintmusic.co.uk/2018/02/symphony-clean-bandit-ft-zara-larsson.html
+  servo4.write(180);
+  servo5.write(0);
+  // https://www.mintmusic.co.uk/2018/02/symphony-clean-bandit-ft-zara-larsson.html
   // tone(buzzerPin, 500, 1000);  // keep just in case meme song doesn't work
   // "I just wanna be part of your symphony"
   // deleted playSong fuction because it was being
-  // activated randomly despite set bool so 
-  // here's to the more primative way of playing 
+  // activated randomly despite set bool so
+  // here's to the more primative way of playing
   // the song at the end
-  Serial.println ("song mode");
+  Serial.println("song mode");
   tone(buzzerPin, 311, 120);  // D#
   delay(220);
   tone(buzzerPin, 349, 120);  // F
