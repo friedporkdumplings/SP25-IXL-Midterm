@@ -134,7 +134,7 @@ void loop() {
 }
 
 void Default() {
-  if (distance > 10 && distance < 50) {
+  if (distance > 1 && distance < 40) {
     isDefault = false;
     isCounting = true;
     isCountingState = true;
