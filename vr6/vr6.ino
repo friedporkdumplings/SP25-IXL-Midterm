@@ -184,7 +184,7 @@ void ServosSpinning() {
   }
 
   if (count >= 20) {
-    Serial.println("servo works");
+  if (count >= 30) {
     isBuzzerActive = true;
   }
 }
