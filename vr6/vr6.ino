@@ -183,7 +183,6 @@ void ServosSpinning() {
   increasing = !increasing;  // swtich between the directions
   }
 
-  if (count >= 20) {
   if (count >= 30) {
     isBuzzerActive = true;
   }
