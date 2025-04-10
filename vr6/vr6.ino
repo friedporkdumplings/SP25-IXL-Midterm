@@ -3,7 +3,6 @@
 // end song and default state triggered
 // only once at the end 
 
-
 #include <Servo.h>
 #include <TM1637Display.h>
 
